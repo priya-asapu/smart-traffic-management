@@ -1,8 +1,8 @@
-import cv2
 from ultralytics import YOLO
+import cv2
 
 # Load YOLO model
-model = YOLO("yolo11n.pt")
+model = YOLO("../yolo11n.pt")
 
 # Open laptop camera
 cap = cv2.VideoCapture(0)
@@ -11,56 +11,42 @@ while True:
     ret, frame = cap.read()
 
     if not ret:
-        print("Camera could not be opened")
+        print("Camera open avvaledu")
         break
 
     # Detect objects
-    results = model(frame, verbose=False)
+    results = model(frame)
 
-    # Store detected objects
-    detected_objects = []
-
+    # Check detected objects
     for result in results:
         for box in result.boxes:
             class_id = int(box.cls[0])
             class_name = model.names[class_id]
-            confidence = float(box.conf[0])
 
-            if confidence > 0.5:
-                detected_objects.append(class_name)
+            if class_name == "person":
+                cv2.putText(
+                    frame,
+                    "HAZARD: PERSON DETECTED",
+                    (20, 40),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    (0, 0, 255),
+                    2
+                )
 
-    # Draw detection boxes
-    annotated_frame = results[0].plot()
-
-    # Person hazard
-    if "person" in detected_objects:
-        cv2.putText(
-            annotated_frame,
-            "HAZARD: PERSON DETECTED",
-            (20, 40),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.9,
-            (0, 0, 255),
-            2
-        )
-
-    # Vehicle detection
-    elif any(
-        vehicle in detected_objects
-        for vehicle in ["car", "motorcycle", "bus", "truck"]
-    ):
-        cv2.putText(
-            annotated_frame,
-            "TRAFFIC VEHICLE DETECTED",
-            (20, 40),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.9,
-            (0, 0, 255),
-            2
-        )
+            elif class_name in ["car", "bus", "truck", "motorcycle"]:
+                cv2.putText(
+                    frame,
+                    "TRAFFIC VEHICLE DETECTED",
+                    (20, 80),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    (0, 255, 255),
+                    2
+                )
 
     # Show camera
-    cv2.imshow("AI Vision Hazards Detection", annotated_frame)
+    cv2.imshow("Smart Traffic Hazard Detection", frame)
 
     # Press Q to stop
     if cv2.waitKey(1) & 0xFF == ord("q"):
